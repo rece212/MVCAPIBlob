@@ -1,0 +1,92 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: .NET Core Desktop & Linux Compliance
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest] # Linux is default; Windows included only if there is a real need per policy
+        configuration: [Debug, Release]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      Solution_Name: your-solution-name                             # Replace with your solution name, i.e. MyWpfApp.sln.
+      Test_Project_Path: your-test-project-path                     # Replace with the path to your test project.
+      Wap_Project_Directory: your-wap-project-directory-name        # Windows-only packaging directory.
+      Wap_Project_Path: your-wap-project-path                       # Windows-only packaging project path.
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    # Add MSBuild to the PATH (Windows only, skipped on Linux)
+    - name: Setup MSBuild.exe
+      if: startsWith(matrix.os, 'windows')
+      uses: microsoft/setup-msbuild@v2
+
+    # Execute all unit tests in the solution (works cross-platform on Linux & Windows)
+    - name: Execute unit tests
+      run: dotnet test
+
+    # Restore the application (Windows only)
+    - name: Restore the application (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    # Decode the base 64 encoded pfx and save the Signing_Certificate (Windows only)
+    - name: Decode the pfx (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.Base64_Encoded_Pfx }}")
+        $certificatePath = Join-Path -Path $env:Wap_Project_Directory -ChildPath GitHubActionsWorkflow.pfx
+        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+
+    # Create the app package (Windows only)
+    - name: Create the app package (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: msbuild $env:Wap_Project_Path /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
+      env:
+        Appx_Bundle: Always
+        Appx_Bundle_Platforms: x86|x64
+        Appx_Package_Build_Mode: StoreUpload
+        Configuration: ${{ matrix.configuration }}
+
+    # Remove the pfx (Windows only)
+    - name: Remove the pfx (Windows)
+      if: startsWith(matrix.os, 'windows')
+      run: Remove-Item -path $env:Wap_Project_Directory\GitHubActionsWorkflow.pfx
+
+    # Upload build artifacts (Windows only)
+    - name: Upload Windows build artifacts
+      if: startsWith(matrix.os, 'windows')
+      uses: actions/upload-artifact@v4
+      with:
+        name: MSIX Package-${{ matrix.configuration }}
+        path: ${{ env.Wap_Project_Directory }}\AppPackages
+
+    # Linux publish step (if you want to build standard Linux binaries on Ubuntu runners)
+    - name: Publish Linux Build
+      if: startsWith(matrix.os, 'ubuntu')
+      run: dotnet publish -c ${{ matrix.configuration }}

@@ -1,0 +1,73 @@
+﻿@model IEnumerable<MVCBlob.Models.FileRecord>
+
+@{
+    ViewData["Title"] = "Student File Storage";
+}
+
+<div class="container mt-4">
+    <h2>Student File Storage Demo</h2>
+    <p class="text-secondary">Files are saved in Azurite Blob Storage via our Minimal API.</p>
+    <hr />
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- Upload Card -->
+    <div class="card p-3 mb-4 shadow-sm">
+        <h5 class="card-title">Upload a File</h5>
+        <form asp-action="Upload" method="post" enctype="multipart/form-data" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <input type="file" name="file" class="form-control" required />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Upload to Azurite</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table of Blobs -->
+    <h5>Current Blobs in Storage</h5>
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 30%;">File Name</th>
+                <th style="width: 45%;">Blob URI (Azurite)</th>
+                <th style="width: 15%;">Uploaded At</th>
+                <th style="width: 10%;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No files found in Azurite storage.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">@item.FileName</td>
+                        <td><small><code>@item.BlobUri</code></small></td>
+                        <td>@item.UploadedAt.ToLocalTime().ToString("g")</td>
+                        <td>
+                            <a href="@item.BlobUri" target="_blank" class="btn btn-sm btn-outline-success">View</a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

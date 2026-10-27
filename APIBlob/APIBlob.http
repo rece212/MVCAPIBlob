@@ -1,0 +1,6 @@
+@APIBlob_HostAddress = http://localhost:5124
+
+GET {{APIBlob_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
