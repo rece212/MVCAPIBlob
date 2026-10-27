@@ -13,11 +13,11 @@ docker build -t blobapi -f APIBlob/Dockerfile .
 docker run -d --name apiblob-app -p 5000:8080 --add-host=host.docker.internal:host-gateway blobapi
 ```
 ## MVC Side 
-### Docker create build API
+### Docker create build MVC
 ```bash
 docker build -t blobmvc -f MVCBlob/Dockerfile .
 ```
-### Docker run of the API
+### Docker run of the MVC
 ```bash
 docker run -d --name mvcblob-app -p 80:8080 --add-host=host.docker.internal:host-gateway blobmvc
 ```
