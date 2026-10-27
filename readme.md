@@ -6,11 +6,11 @@ docker run -p 10000:10000 -v azurite_data:/data --name azurite -d mcr.microsoft.
 ## API side
 ### Docker create build API
 ```bash
-docker build -t blobAPI -f APIBlob/Dockerfile .
+docker build -t blobapi -f APIBlob/Dockerfile .
 ```
 ### Docker run of the API
 ```bash
-docker run -d --name apiblob-app -p 5000:8080 --add-host=host.docker.internal:host-gateway blobAPI
+docker run -d --name apiblob-app -p 5000:8080 --add-host=host.docker.internal:host-gateway blobapi
 ```
 ## MVC Side 
 ### Docker create build API
