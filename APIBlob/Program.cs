@@ -16,15 +16,14 @@ namespace APIBlob
             builder.Services.AddOpenApi();
             var app = builder.Build();
             // Configure the HTTP request pipeline.
-            if (11==11)
-            {//added bellow
+          
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Student Blob API v1");
                     c.RoutePrefix = string.Empty;
                 });
-            }
+            
             #endregion
             app.UseHttpsRedirection();
             app.UseAuthorization();
